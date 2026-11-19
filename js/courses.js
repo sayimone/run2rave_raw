@@ -18,7 +18,7 @@ const COURSES = [
     bpm: 120,
     window: 0.15,          // 판정 범위(초): 이 안이면 GOOD, 절반 안이면 PERFECT
     baseKmh: 8,
-    duration: 45,          // 기준 속도로 달렸을 때 게임 시간(초)
+    duration: 20,          // 기준 속도로 달렸을 때 게임 시간(초)
     color: '#EAFE50',
     ink: '#000000',
     figure: 'lime',
@@ -53,7 +53,7 @@ const COURSES = [
     bpm: 128,
     window: 0.12,
     baseKmh: 10,
-    duration: 50,
+    duration: 24,
     color: '#5B8CFF',
     ink: '#000000',
     figure: 'blue',
@@ -88,7 +88,7 @@ const COURSES = [
     bpm: 135,
     window: 0.09,
     baseKmh: 12,
-    duration: 60,
+    duration: 28,
     color: '#FF4FA3',
     ink: '#000000',
     figure: 'pink',

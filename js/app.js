@@ -86,8 +86,7 @@
       <table>
         <tr><th>코스(편도)</th><td>${course.from} → ${course.to}</td></tr>
         <tr><th>거리</th><td><b>${course.distanceLabel}</b> · ${course.terrainLabel}</td></tr>
-        <tr><th>비트</th><td><b>${course.bpm} BPM</b> · 판정 ±${course.window.toFixed(2)}초</td></tr>
-        <tr><th>기준 속도</th><td><b>${course.baseKmh} KM/H</b></td></tr>
+        <tr><th>비트</th><td><b>${course.bpm} BPM</b></td></tr>
         <tr><th>도착 베뉴</th><td><b>${course.venue.name}</b> · ${course.venue.kr}<br><small>가상 베뉴 · ${course.venue.place}</small></td></tr>
       </table>
       <button class="btn big" data-go="to">이 코스로 출발 →</button>`;
@@ -100,13 +99,9 @@
     stopRun();
     const c = course;
     $('#to').dataset.course = c.id;
-    $('#hud-level').textContent = c.level;
-    $('#hud-name').textContent = `${c.name} → ${c.venue.name}`;
-    $('#ready-level').textContent = `${c.level} · ${c.bpm} BPM`;
-    $('#ready-name').textContent = c.name;
-    $('#prog-from').textContent = c.from;
-    $('#prog-to').textContent = `${c.venue.name} (가상)`;
+    $('#ready-name').textContent = `${c.level} · ${c.name}`;
     $('#stage-bg').className = `stage-bg ${c.stage}`;
+    $('#progress-venue').textContent = c.venue.name.replace('R2R ', '');
     const bar = $('#progress-bar');
     bar.querySelectorAll('.cp').forEach((n) => n.remove());
     c.checkpoints.forEach((p) => {
@@ -117,13 +112,13 @@
     $('#ready').hidden = false;
     $('#count').textContent = '';
     $('#judge').textContent = '';
-    updateHud(0, 0, null, 0, 'flat');
+    $('#runner').style.transform = '';
+    updateHud(0, 0, 'flat');
     setProgress(0);
   }
 
   function startRun() {
     engine.unlock();
-    engine.setMuted($('#mute').checked);
     $('#ready').hidden = true;
     const c = course;
     run = {
@@ -222,14 +217,14 @@
 
     // 화면 갱신
     const totalAcc = run.scores.length ? run.scores.reduce((a, b) => a + b, 0) / run.scores.length : null;
-    updateHud(run.speed, run.elapsed, totalAcc, run.km, ter);
+    updateHud(run.speed, run.km, ter);
     setProgress(run.km / course.distanceKm);
     drawApproach(at);
     if (!reduceMotion) {
       run.scroll += run.speed * dt * 14;
       $('#stage-bg').style.backgroundPositionX = `${-run.scroll}px`;
       const phase = ((at - engine.startTime) / engine.interval) % 1;
-      $('#runner').style.transform = `translateY(${-Math.abs(Math.sin(phase * Math.PI)) * 14}px) rotate(${ter === 'up' ? -6 : ter === 'down' ? 5 : 0}deg)`;
+      $('#runner').style.transform = `translateY(${-Math.abs(Math.sin(phase * Math.PI)) * 14}px) rotate(${ter === 'up' ? -6 : ter === 'down' ? 5 : 0}deg) scaleX(-1)`;
     }
 
     if (run.km >= course.distanceKm) return finish(totalAcc || 0);
@@ -244,12 +239,10 @@
     el.style.opacity = String(1 - p * 0.7);
   }
 
-  function updateHud(kmh, sec, acc, km, ter) {
+  function updateHud(kmh, km, ter) {
     $('#hud-kmh').textContent = kmh.toFixed(1);
-    $('#hud-pace').textContent = kmh > 0 ? pace(kmh) : `--'--"`;
-    $('#hud-acc').textContent = acc == null ? '--%' : `${Math.round(acc * 100)}%`;
-    $('#hud-time').textContent = clock(sec);
     const t = $('#hud-terrain');
+    t.hidden = ter === 'flat';
     t.textContent = TERRAIN_LABEL[ter];
     t.dataset.t = ter;
     $('#prog-km').textContent = `${km.toFixed(1)} / ${course.distanceKm.toFixed(1)} KM`;
@@ -276,7 +269,6 @@
       course,
       avgKmh: avg,
       pace: pace(avg),
-      realSec: course.distanceKm / avg * 3600,
       acc: Math.round(acc * 100)
     };
     $('.steps [data-go="rave"]').disabled = false;
@@ -292,12 +284,9 @@
     $('#rave-kicker').textContent = `FINISH · ${v.name} ${v.kr}`;
     $('#venue-line').textContent = `${v.place}(가상) — ${v.line}`;
     $('#res-kmh').textContent = result.avgKmh.toFixed(1);
-    $('#res-time').textContent = clock(result.realSec);
     $('#res-acc').textContent = `${result.acc}%`;
-    $('#programs').innerHTML = `<li class="pv">코어 밸류 · ${v.value}</li>` + v.programs.map((p) => `<li>${p}</li>`).join('');
     $('#venue-art').innerHTML = venueArt(v.id, c.figure);
     hydrateFigs($('#venue-art'));
-    $('#save-btn').disabled = true;
     makeTicket();
   }
 
@@ -330,11 +319,7 @@
     });
   }
 
-  $('#ticket-form').addEventListener('submit', (e) => {
-    e.preventDefault();
-    makeTicket();
-    $('#save-btn').disabled = false;
-  });
+  $('#runner-name').addEventListener('input', () => result && makeTicket());
 
   $('#save-btn').addEventListener('click', () => {
     try {
@@ -351,11 +336,12 @@
 
   /* ---------- 입력 ---------- */
   $('#start-btn').addEventListener('click', (e) => { e.stopPropagation(); startRun(); });
-  $('#stage').addEventListener('pointerdown', (e) => {
-    if (e.target.closest('.overlay')) return;
+  // 게임 화면 어디를 눌러도 탭 (메뉴·시작 화면 제외)
+  $('#to').addEventListener('pointerdown', (e) => {
+    if (e.target.closest('.overlay, .nav')) return;
+    e.preventDefault();
     tap();
   });
-  $('#tap-btn').addEventListener('pointerdown', (e) => { e.preventDefault(); tap(); });
   document.addEventListener('keydown', (e) => {
     if (document.body.dataset.screen !== 'to') return;
     if (e.code !== 'Space' && e.key !== ' ') return;
@@ -363,7 +349,6 @@
     if (e.repeat) return;
     if (!$('#ready').hidden) startRun(); else tap();
   });
-  $('#mute').addEventListener('change', (e) => engine.setMuted(e.target.checked));
 
   /* ---------- 유틸 ---------- */
   function pace(kmh) {
@@ -371,10 +356,6 @@
     let mm = Math.floor(m), ss = Math.round((m - mm) * 60);
     if (ss === 60) { mm++; ss = 0; }
     return `${mm}'${String(ss).padStart(2, '0')}"`;
-  }
-  function clock(sec) {
-    const s = Math.round(sec);
-    return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
   }
 
   if (params.has('debug')) window.R2R = { engine, get run() { return run; }, get course() { return course; } };

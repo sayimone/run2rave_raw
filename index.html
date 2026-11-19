@@ -76,14 +76,8 @@
     <section id="to" class="screen dark" aria-labelledby="to-title">
       <h2 id="to-title" class="sr-only">비트에 맞춰 달리기</h2>
       <div class="hud">
-        <div class="hud-course"><span id="hud-level" class="pill"></span><b id="hud-name"></b></div>
         <div class="hud-speed"><span id="hud-kmh">0.0</span><small>KM/H</small></div>
-        <dl class="hud-stats">
-          <div><dt>페이스</dt><dd id="hud-pace">--'--"</dd></div>
-          <div><dt>정확도</dt><dd id="hud-acc">--%</dd></div>
-          <div><dt>시간</dt><dd id="hud-time">00:00</dd></div>
-          <div><dt>지형</dt><dd id="hud-terrain">FLAT</dd></div>
-        </dl>
+        <span class="hud-terrain" id="hud-terrain" hidden></span>
       </div>
 
       <div class="stage" id="stage">
@@ -96,20 +90,18 @@
         <svg id="runner" class="runner" data-fig="fig-run" aria-hidden="true"></svg>
         <div class="toast" id="toast"></div>
         <div class="overlay" id="ready">
-          <p class="kicker" id="ready-level"></p>
           <p class="ready-title" id="ready-name"></p>
-          <p class="ready-sub">원 두 개가 겹치는 순간, 박자에 맞춰 탭!<br><kbd>Space</kbd> 또는 화면 탭 · 박자를 놓쳐도 멈추지 않아요</p>
-          <button class="btn big" id="start-btn">탭해서 출발</button>
-          <label class="mute"><input type="checkbox" id="mute"> 소리 없이(시각 비트만)</label>
+          <p class="ready-sub">원이 겹칠 때 탭 · <kbd>Space</kbd></p>
+          <button class="btn big" id="start-btn">출발</button>
         </div>
         <div class="count" id="count" aria-live="assertive"></div>
       </div>
 
       <div class="progress">
-        <div class="progress-labels"><span id="prog-from"></span><span id="prog-km">0.0 / 0.0 KM</span><span id="prog-to"></span></div>
-        <div class="progress-bar" id="progress-bar"><div class="progress-fill" id="progress-fill"></div><div class="progress-dot" id="progress-dot"></div><div class="progress-venue" id="progress-venue">R2R</div></div>
+        <div class="progress-bar" id="progress-bar"><div class="progress-fill" id="progress-fill"></div><div class="progress-dot" id="progress-dot"></div></div>
+        <span class="progress-venue" id="progress-venue">R2R</span>
+        <span class="prog-km" id="prog-km">0.0 / 0.0 KM</span>
       </div>
-      <button class="tap-btn" id="tap-btn" aria-label="박자 탭">TAP</button>
     </section>
 
     <!-- 3. RAVE: 베뉴 도착과 입장권 -->
@@ -121,20 +113,14 @@
         <p class="venue-line" id="venue-line"></p>
         <div class="result">
           <div><b id="res-kmh">0.0</b><small>KM/H</small><span>평균 속도</span></div>
-          <div><b id="res-time">00:00</b><span>이 속도로 실제 코스를 달리면</span></div>
           <div><b id="res-acc">0%</b><span>박자 정확도</span></div>
         </div>
-        <p class="fine">게임 기록을 실제 코스 거리로 환산한 값이에요. 실제 러닝 기록이 아닙니다.</p>
-        <ul class="programs" id="programs"></ul>
-        <form class="ticket-form" id="ticket-form">
-          <label for="runner-name">입장권에 적을 이름</label>
-          <div class="row"><input id="runner-name" maxlength="12" placeholder="RUNNER" autocomplete="off"><button class="btn">입장권 만들기</button></div>
-        </form>
+        <p class="fine">게임 기록을 실제 코스 거리로 환산한 값이에요.</p>
+        <input id="runner-name" class="name-input" maxlength="12" placeholder="이름을 넣으면 입장권에 적혀요" autocomplete="off" aria-label="입장권에 적을 이름">
         <canvas id="ticket" width="1200" height="480" aria-label="입장권 미리보기"></canvas>
         <div class="rave-actions">
           <button class="btn ghost" id="again-btn">다시 달리기</button>
-          <button class="btn ghost" data-go="run">다른 코스</button>
-          <button class="btn" id="save-btn" disabled>입장권 이미지로 저장</button>
+          <button class="btn" id="save-btn">입장권 저장</button>
         </div>
       </div>
     </section>
