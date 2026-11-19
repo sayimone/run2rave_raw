@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>RUN2RAVE — 달린 자만이 플로어로</title>
+  <meta name="description" content="RUN2RAVE 소전시 테마 사이트. 서울의 코스를 비트에 맞춰 달리고, 코스 끝 가상의 레이빙 베뉴에 입장하세요.">
+  <meta name="theme-color" content="#EAFE50">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet">
+  <link rel="icon" type="image/png" href="assets/img/symbol-green.png">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body data-screen="home">
+
+  <!-- 상단 내비게이션 -->
+  <header class="nav">
+    <button class="logo" data-go="home" aria-label="처음으로">
+      <img src="assets/img/signature-black.png" alt="RUN2RAVE" class="logo-k">
+      <img src="assets/img/signature-white.png" alt="" class="logo-w" aria-hidden="true">
+    </button>
+    <nav class="steps" aria-label="단계">
+      <button data-go="run">01 RUN</button>
+      <button data-go="to" disabled>02 TO</button>
+      <button data-go="rave" disabled>03 RAVE</button>
+    </nav>
+    <button class="info-btn" data-go="info">전시 정보</button>
+  </header>
+
+  <main>
+    <!-- 0. 홈 -->
+    <section id="home" class="screen lime active" aria-labelledby="home-title">
+      <div class="home-inner">
+        <p class="kicker">RUN → TO → RAVE</p>
+        <h1 id="home-title" class="home-title">달린 자만이<br>플로어로 들어간다.</h1>
+        <p class="home-sub">서울의 코스를 비트에 맞춰 달리고,<br>코스 끝 가상의 레이빙 베뉴에 입장하세요.</p>
+        <button class="btn big" data-go="run">코스 고르러 가기 →</button>
+        <p class="hint">탭 또는 스페이스바 하나로 달려요 · 소리를 켜 주세요</p>
+      </div>
+      <div class="home-art" aria-hidden="true">
+        <img src="assets/img/symbol-green.png" class="home-two" alt="">
+        <img src="assets/img/figure0-black.png" class="home-fig f0" alt="">
+        <img src="assets/img/figure1-black.png" class="home-fig f1" alt="">
+        <img src="assets/img/figure2-black.png" class="home-fig f2" alt="">
+        <svg class="home-zig" viewBox="0 0 600 120" preserveAspectRatio="none"><polyline points="0,90 60,30 120,90 180,30 240,90 300,30 360,90 420,30 480,90 540,30 600,90" /></svg>
+      </div>
+    </section>
+
+    <!-- 1. RUN: 코스 고르기 -->
+    <section id="run" class="screen lime" aria-labelledby="run-title">
+      <div class="run-head">
+        <p class="kicker">SELECT COURSE · SEOUL</p>
+        <h2 id="run-title">오늘은 어디를 달릴까요?</h2>
+      </div>
+      <div class="run-body">
+        <div class="map-wrap">
+          <svg id="map" viewBox="0 0 700 560" role="img" aria-label="서울 개략 지도와 코스 3곳">
+            <path class="seoul" d="M120 250 C110 170 170 90 260 70 C340 50 420 40 500 60 C580 80 640 140 640 220 C645 300 610 380 560 430 C500 490 400 520 300 510 C200 500 130 440 115 360 C108 320 125 290 120 250Z"/>
+            <path class="river" d="M40 330 C140 320 200 360 280 372 C360 384 430 360 500 332 C560 308 620 300 690 290"/>
+            <text class="river-label" x="520" y="352">HAN RIVER</text>
+            <g id="pins"></g>
+          </svg>
+          <p class="map-note">서울 개략도 · 위치는 대략적인 배치</p>
+        </div>
+        <aside class="panel" id="course-panel" aria-live="polite"></aside>
+      </div>
+    </section>
+
+    <!-- 2. TO: 비트에 맞춰 달리기 -->
+    <section id="to" class="screen dark" aria-labelledby="to-title">
+      <h2 id="to-title" class="sr-only">비트에 맞춰 달리기</h2>
+      <div class="hud">
+        <div class="hud-course"><span id="hud-level" class="pill"></span><b id="hud-name"></b></div>
+        <div class="hud-speed"><span id="hud-kmh">0.0</span><small>KM/H</small></div>
+        <dl class="hud-stats">
+          <div><dt>페이스</dt><dd id="hud-pace">--'--"</dd></div>
+          <div><dt>정확도</dt><dd id="hud-acc">--%</dd></div>
+          <div><dt>시간</dt><dd id="hud-time">00:00</dd></div>
+          <div><dt>지형</dt><dd id="hud-terrain">FLAT</dd></div>
+        </dl>
+      </div>
+
+      <div class="stage" id="stage">
+        <div class="stage-bg" id="stage-bg"></div>
+        <div class="beat-zone">
+          <div class="ring target"></div>
+          <div class="ring approach" id="approach"></div>
+          <div class="judge" id="judge"></div>
+        </div>
+        <img id="runner" class="runner" src="assets/img/figure0-lime.png" alt="">
+        <div class="toast" id="toast"></div>
+        <div class="overlay" id="ready">
+          <p class="kicker" id="ready-level"></p>
+          <p class="ready-title" id="ready-name"></p>
+          <p class="ready-sub">원 두 개가 겹치는 순간, 박자에 맞춰 탭!<br><kbd>Space</kbd> 또는 화면 탭 · 박자를 놓쳐도 멈추지 않아요</p>
+          <button class="btn big" id="start-btn">탭해서 출발</button>
+          <label class="mute"><input type="checkbox" id="mute"> 소리 없이(시각 비트만)</label>
+        </div>
+        <div class="count" id="count" aria-live="assertive"></div>
+      </div>
+
+      <div class="progress">
+        <div class="progress-labels"><span id="prog-from"></span><span id="prog-km">0.0 / 0.0 KM</span><span id="prog-to"></span></div>
+        <div class="progress-bar" id="progress-bar"><div class="progress-fill" id="progress-fill"></div><div class="progress-dot" id="progress-dot"></div><div class="progress-venue" id="progress-venue">R2R</div></div>
+      </div>
+      <button class="tap-btn" id="tap-btn" aria-label="박자 탭">TAP</button>
+    </section>
+
+    <!-- 3. RAVE: 베뉴 도착과 입장권 -->
+    <section id="rave" class="screen lime" aria-labelledby="rave-title">
+      <div class="venue-art" id="venue-art" aria-hidden="true"></div>
+      <div class="rave-inner">
+        <p class="kicker" id="rave-kicker">FINISH</p>
+        <h2 id="rave-title">달린 당신만, 플로어로 들어와요.</h2>
+        <p class="venue-line" id="venue-line"></p>
+        <div class="result">
+          <div><b id="res-kmh">0.0</b><small>KM/H</small><span>평균 속도</span></div>
+          <div><b id="res-time">00:00</b><span>이 속도로 실제 코스를 달리면</span></div>
+          <div><b id="res-acc">0%</b><span>박자 정확도</span></div>
+        </div>
+        <p class="fine">게임 기록을 실제 코스 거리로 환산한 값이에요. 실제 러닝 기록이 아닙니다.</p>
+        <ul class="programs" id="programs"></ul>
+        <form class="ticket-form" id="ticket-form">
+          <label for="runner-name">입장권에 적을 이름</label>
+          <div class="row"><input id="runner-name" maxlength="12" placeholder="RUNNER" autocomplete="off"><button class="btn">입장권 만들기</button></div>
+        </form>
+        <canvas id="ticket" width="1200" height="480" aria-label="입장권 미리보기"></canvas>
+        <div class="rave-actions">
+          <button class="btn ghost" id="again-btn">다시 달리기</button>
+          <button class="btn ghost" data-go="run">다른 코스</button>
+          <button class="btn" id="save-btn" disabled>입장권 이미지로 저장</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. 전시 정보 -->
+    <section id="info" class="screen dark" aria-labelledby="info-title">
+      <div class="info-inner">
+        <img src="assets/img/wordmark-white.png" alt="RUN2RAVE" class="info-word">
+        <h2 id="info-title">〈RUN2RAVE: 공명〉 소전시</h2>
+        <dl class="info-list">
+          <div><dt>일정</dt><dd>2026.12.○○ — 12.○○</dd></div>
+          <div><dt>장소</dt><dd>○○○</dd></div>
+          <div><dt>전시</dt><dd>브랜드 아이덴티티 · 리스트밴드 · 캔 패키지 · 포스터 · 웹게임</dd></div>
+        </dl>
+        <div class="rules">
+          <p><b>RUN</b> 이어폰을 끼고 각자의 페이스로 달린다.</p>
+          <p><b>TO</b> 러닝 기록이 곧 입장권이 된다.</p>
+          <p><b>RAVE</b> 결승점에서 논알콜 쿨다운 테크노 파티. 촬영 대신 몰입.</p>
+        </div>
+        <p class="promise">운동은 더 즐거워지고, 놀이는 더 건강해진다.</p>
+        <p class="credit">RUN2RAVE는 수업 과제를 위해 만든 <b>가상의 브랜드</b>이며, 같은 이름의 실제 행사·단체와 관련이 없습니다. 코스 끝의 레이빙 베뉴도 모두 가상의 장소입니다.<br>브랜드 기획·디자인 시스템: Team 3 · 웹: ○○○</p>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/courses.js"></script>
+  <script src="js/beat.js"></script>
+  <script src="js/ticket.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
