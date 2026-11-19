@@ -111,10 +111,78 @@
     });
     $('#ready').hidden = false;
     $('#count').textContent = '';
-    $('#judge').textContent = '';
-    $('#runner').style.transform = '';
+    clearNotes();
+    $('#runner').style.transform = `translate(${stage.clientWidth * 0.14}px, ${stage.clientHeight * 0.72}px) translate(-50%, -100%) scaleX(-1)`;
     updateHud(0, 0, 'flat');
     setProgress(0);
+  }
+
+  /* ---------- 노트(원) 배치: osu처럼 화면 곳곳에 박자마다 원이 뜬다 ---------- */
+  const stage = $('#stage');
+  const notesEl = $('#notes');
+  const linksEl = $('#links');
+
+  function noteR() { return parseFloat(getComputedStyle(stage).getPropertyValue('--note')) / 2 || 48; }
+
+  // i번째 박자의 원 위치(0~1 비율). 이전 위치에서 부드럽게 이어지는 랜덤 워크
+  function point(i) {
+    const P = run.points;
+    if (P[i]) return P[i];
+    if (i < engine.countIn) return P[engine.countIn - 1];
+    const prev = point(i - 1);
+    const w = stage.clientWidth, h = stage.clientHeight, r = noteR();
+    const mx = (r + 16) / w, my = (r + 16) / h;
+    const d = r * 2;
+    const step = Math.max(d * 1.25, Math.min(d * (2 + Math.random() * 1.5), Math.min(w, h) * 0.9));
+    const prev2 = i - 2 >= engine.countIn ? point(i - 2) : null;
+    let ang = run.angle + (Math.random() - 0.5) * 2.2;
+    let x, y;
+    for (let k = 0; k < 16; k++) {
+      x = prev.x + Math.cos(ang) * step / w;
+      y = prev.y + Math.sin(ang) * step / h;
+      const inside = x > mx && x < 1 - mx && y > my + 0.04 && y < 1 - my;
+      const clear = !prev2 || Math.hypot((x - prev2.x) * w, (y - prev2.y) * h) > d * 1.1;
+      if (inside && clear) break;
+      ang += Math.PI / 3 + Math.random();
+    }
+    x = Math.min(1 - mx, Math.max(mx, x));
+    y = Math.min(1 - my, Math.max(my + 0.04, y));
+    run.angle = ang;
+    return (P[i] = { x, y });
+  }
+
+  function spawnNote(i) {
+    const p = point(i);
+    const el = document.createElement('div');
+    el.className = 'note';
+    el.style.left = `${p.x * 100}%`;
+    el.style.top = `${p.y * 100}%`;
+    el.innerHTML = `<span class="note-ring"></span><b>${((i - engine.countIn) % 4) + 1}</b>`;
+    notesEl.appendChild(el);
+    // 다음 원으로 이어지는 선
+    let link = null;
+    if (run.notes.has(i - 1)) {
+      const q = point(i - 1);
+      link = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      link.setAttribute('x1', q.x * 100); link.setAttribute('y1', q.y * 100);
+      link.setAttribute('x2', p.x * 100); link.setAttribute('y2', p.y * 100);
+      linksEl.appendChild(link);
+    }
+    run.notes.set(i, { el, ring: el.firstChild, link });
+  }
+
+  function retireNote(i, cls) {
+    const n = run.notes.get(i);
+    if (!n) return;
+    n.el.classList.add('out', cls);
+    if (n.link) n.link.classList.add('out');
+    setTimeout(() => { n.el.remove(); n.link && n.link.remove(); }, 320);
+    run.notes.delete(i);
+  }
+
+  function clearNotes() {
+    notesEl.innerHTML = '';
+    linksEl.innerHTML = '';
   }
 
   function startRun() {
@@ -125,9 +193,13 @@
       km: 0, elapsed: 0, speedTime: 0, speed: 0,
       scores: [], judged: new Set(), cpPassed: 0,
       compress: (c.distanceKm / (c.baseKmh * c.duration / 3600)) * FAST,
-      last: performance.now(), scroll: 0, done: false
+      last: performance.now(), scroll: 0, done: false,
+      points: [], angle: -0.4, notes: new Map(), spawned: 0
     };
     engine.start(c.bpm, 4);
+    run.points[engine.countIn - 1] = { x: 0.14, y: 0.72 };
+    run.spawned = engine.countIn;
+    run.approach = Math.max(engine.interval * 2, 0.8);   // 원이 나타나서 박자까지 걸리는 시간
     requestAnimationFrame(loop);
   }
 
@@ -135,39 +207,61 @@
     engine.stop();
     if (run) run.done = true;
     run = null;
+    clearNotes();
   }
 
-  function tap() {
+  /* 탭 판정. pos가 있으면(마우스·터치) 원 안을 눌렀는지도 본다. 키보드는 박자만 본다 */
+  function tap(pos) {
     if (!run || run.done) return;
     const t = engine.now() - engine.latency();
-    const first = engine.beatTime(engine.countIn);
-    if (t < first - course.window) return;           // 카운트인 중
-    const i = Math.round((t - engine.startTime) / engine.interval);
-    if (i < engine.countIn || run.judged.has(i)) return;
-    const diff = Math.abs(t - engine.beatTime(i));
-    if (diff <= course.window / 2) judge(i, 1, 'PERFECT');
-    else if (diff <= course.window) judge(i, 0.6, 'GOOD');
-    pulse();
+    let best = null;
+    run.notes.forEach((n, i) => {
+      if (run.judged.has(i)) return;
+      const diff = Math.abs(t - engine.beatTime(i));
+      if (diff > course.window) return;
+      if (pos) {
+        const p = point(i), r = noteR() * 1.35;
+        const dx = (pos.x - p.x) * stage.clientWidth, dy = (pos.y - p.y) * stage.clientHeight;
+        if (dx * dx + dy * dy > r * r) return;
+      }
+      if (best === null || i < best.i) best = { i, diff };
+    });
+    if (!best) return;
+    if (best.diff <= course.window / 2) judge(best.i, 1, 'PERFECT');
+    else judge(best.i, 0.6, 'GOOD');
   }
 
   function judge(i, score, label) {
     run.judged.add(i);
     run.scores.push(score);
-    const j = $('#judge');
-    j.textContent = label;
-    j.className = `judge show ${label.toLowerCase()}`;
-    clearTimeout(judge.t);
-    judge.t = setTimeout(() => (j.className = 'judge'), 380);
-  }
-
-  function pulse() {
-    const s = $('#stage');
-    s.classList.remove('hit'); void s.offsetWidth; s.classList.add('hit');
+    const p = point(i);
+    retireNote(i, score > 0 ? 'hit' : 'miss');
+    const pop = document.createElement('div');
+    pop.className = `judge-pop ${label.toLowerCase()}`;
+    pop.textContent = label;
+    pop.style.left = `${p.x * 100}%`;
+    pop.style.top = `${p.y * 100}%`;
+    notesEl.appendChild(pop);
+    setTimeout(() => pop.remove(), 520);
   }
 
   function terrainAt(frac) {
     const seg = course.terrain.find((s) => frac >= s.from && frac < s.to) || course.terrain[course.terrain.length - 1];
     return seg.type;
+  }
+
+  /* 러너: 박자 i에 원 i 위에 착지하고, 다음 박자까지 원 i+1로 뛰어간다 */
+  function moveRunner(at) {
+    const s = Math.max(engine.countIn - 1, (at - engine.startTime) / engine.interval);
+    const i = Math.floor(s), f = s - i;
+    const a = point(i), b = point(i + 1);
+    const w = stage.clientWidth, h = stage.clientHeight;
+    const e = f * f * (3 - 2 * f);
+    const x = (a.x + (b.x - a.x) * e) * w;
+    const hop = reduceMotion ? 0 : Math.sin(f * Math.PI) * Math.min(60, h * 0.08);
+    const y = (a.y + (b.y - a.y) * e) * h - noteR() - 4 - hop;
+    const face = b.x >= a.x ? -1 : 1;     // 원본 피규어가 왼쪽을 보므로 오른쪽으로 갈 땐 뒤집는다
+    $('#runner').style.transform = `translate(${x}px, ${y}px) translate(-50%, -100%) scaleX(${face})`;
   }
 
   function loop(now) {
@@ -177,11 +271,21 @@
     const at = engine.now() - engine.latency();
     const first = engine.beatTime(engine.countIn);
 
+    // 원 생성: 박자 시각보다 approach초 먼저 나타난다
+    while (engine.beatTime(run.spawned) - at <= run.approach) spawnNote(run.spawned++);
+
+    // 다가오는 링
+    run.notes.forEach((n, i) => {
+      const p = Math.max(0, Math.min(1, (engine.beatTime(i) - at) / run.approach));
+      n.ring.style.transform = `scale(${1 + p * 1.8})`;
+      n.ring.style.opacity = String(0.35 + (1 - p) * 0.65);
+    });
+    moveRunner(at);
+
     // 카운트인 표시
     if (at < first) {
       const k = Math.floor((at - engine.startTime) / engine.interval);
       $('#count').textContent = k >= 0 ? String(engine.countIn - k) : '';
-      drawApproach(at);
       requestAnimationFrame(loop);
       return;
     }
@@ -191,10 +295,9 @@
     }
 
     // 놓친 박자 처리
-    const last = Math.floor((at - engine.startTime) / engine.interval);
-    for (let i = engine.countIn; i <= last; i++) {
+    run.notes.forEach((n, i) => {
       if (!run.judged.has(i) && at > engine.beatTime(i) + course.window) judge(i, 0, 'MISS');
-    }
+    });
 
     // 속도 계산
     const recent = run.scores.slice(-8);
@@ -215,28 +318,16 @@
       toast(`${cp.name} 통과`);
     }
 
-    // 화면 갱신
     const totalAcc = run.scores.length ? run.scores.reduce((a, b) => a + b, 0) / run.scores.length : null;
     updateHud(run.speed, run.km, ter);
     setProgress(run.km / course.distanceKm);
-    drawApproach(at);
     if (!reduceMotion) {
       run.scroll += run.speed * dt * 14;
       $('#stage-bg').style.backgroundPositionX = `${-run.scroll}px`;
-      const phase = ((at - engine.startTime) / engine.interval) % 1;
-      $('#runner').style.transform = `translateY(${-Math.abs(Math.sin(phase * Math.PI)) * 14}px) rotate(${ter === 'up' ? -6 : ter === 'down' ? 5 : 0}deg) scaleX(-1)`;
     }
 
     if (run.km >= course.distanceKm) return finish(totalAcc || 0);
     requestAnimationFrame(loop);
-  }
-
-  function drawApproach(at) {
-    const i = Math.max(0, Math.ceil((at - engine.startTime) / engine.interval));
-    const p = Math.max(0, Math.min(1, (engine.beatTime(i) - at) / engine.interval));
-    const el = $('#approach');
-    el.style.transform = `translate(-50%,-50%) scale(${1 + p * 1.6})`;
-    el.style.opacity = String(1 - p * 0.7);
   }
 
   function updateHud(kmh, km, ter) {
@@ -264,6 +355,7 @@
     run.done = true;
     engine.stop();
     engine.finale();
+    clearNotes();
     const avg = run.speedTime / run.elapsed;
     result = {
       course,
@@ -336,15 +428,16 @@
 
   /* ---------- 입력 ---------- */
   $('#start-btn').addEventListener('click', (e) => { e.stopPropagation(); startRun(); });
-  // 게임 화면 어디를 눌러도 탭 (메뉴·시작 화면 제외)
-  $('#to').addEventListener('pointerdown', (e) => {
-    if (e.target.closest('.overlay, .nav')) return;
+  // 원을 눌러서 탭 (마우스·터치)
+  stage.addEventListener('pointerdown', (e) => {
+    if (e.target.closest('.overlay')) return;
     e.preventDefault();
-    tap();
+    const r = stage.getBoundingClientRect();
+    tap({ x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height });
   });
   document.addEventListener('keydown', (e) => {
     if (document.body.dataset.screen !== 'to') return;
-    if (e.code !== 'Space' && e.key !== ' ') return;
+    if (!['Space', 'KeyZ', 'KeyX'].includes(e.code) && e.key !== ' ') return;
     e.preventDefault();
     if (e.repeat) return;
     if (!$('#ready').hidden) startRun(); else tap();
@@ -358,7 +451,7 @@
     return `${mm}'${String(ss).padStart(2, '0')}"`;
   }
 
-  if (params.has('debug')) window.R2R = { engine, get run() { return run; }, get course() { return course; } };
+  if (params.has('debug')) window.R2R = { engine, point: (i) => point(i), get run() { return run; }, get course() { return course; } };
 
   buildMap();
   selectCourse('easy');

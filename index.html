@@ -28,7 +28,7 @@
       <button data-go="to" disabled><span class="m-hide">02 </span>TO</button>
       <button data-go="rave" disabled><span class="m-hide">03 </span>RAVE</button>
     </nav>
-    <div class="sub-nav"><button class="info-btn" data-go="about">소개</button><button class="info-btn" data-go="info">전시<span class="m-hide"> 정보</span></button></div>
+    <div class="sub-nav"><button class="info-btn" data-go="about">소개</button></div>
   </header>
 
   <main>
@@ -82,16 +82,13 @@
 
       <div class="stage" id="stage">
         <div class="stage-bg" id="stage-bg"></div>
-        <div class="beat-zone">
-          <div class="ring target"></div>
-          <div class="ring approach" id="approach"></div>
-          <div class="judge" id="judge"></div>
-        </div>
+        <svg class="links" id="links" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg>
+        <div class="notes" id="notes" aria-hidden="true"></div>
         <svg id="runner" class="runner" data-fig="fig-run" aria-hidden="true"></svg>
         <div class="toast" id="toast"></div>
         <div class="overlay" id="ready">
           <p class="ready-title" id="ready-name"></p>
-          <p class="ready-sub">원이 겹칠 때 탭 · <kbd>Space</kbd></p>
+          <p class="ready-sub">바깥 링이 원에 닿을 때 원을 탭 · 키보드는 <kbd>Space</kbd></p>
           <button class="btn big" id="start-btn">출발</button>
         </div>
         <div class="count" id="count" aria-live="assertive"></div>
@@ -173,27 +170,9 @@
         <p>누구나 자신의 페이스로,<br>가장 즐거워질 수 있다.</p>
         <button class="btn big" data-go="run">직접 달려 보기 →</button>
       </div>
+      <p class="credit">RUN2RAVE는 수업 과제를 위해 만든 <b>가상의 브랜드</b>이며, 같은 이름의 실제 행사·단체와 관련이 없습니다. 코스 끝의 레이빙 베뉴도 모두 가상의 장소입니다.<br>브랜드 기획·디자인 시스템·목업: Team 3 브랜드 프로포절 A안 '살아있는 내면의 공명'</p>
     </section>
 
-    <!-- 4. 전시 정보 -->
-    <section id="info" class="screen dark" aria-labelledby="info-title">
-      <div class="info-inner">
-        <img src="assets/img/wordmark-white.png" alt="RUN2RAVE" class="info-word">
-        <h2 id="info-title">〈RUN2RAVE: 공명〉 소전시</h2>
-        <dl class="info-list">
-          <div><dt>일정</dt><dd>2026.12.○○ — 12.○○</dd></div>
-          <div><dt>장소</dt><dd>○○○</dd></div>
-          <div><dt>전시</dt><dd>브랜드 아이덴티티 · 리스트밴드 · 캔 패키지 · 포스터 · 웹게임</dd></div>
-        </dl>
-        <div class="rules">
-          <p><b>RUN</b> 이어폰을 끼고 각자의 페이스로 달린다.</p>
-          <p><b>TO</b> 러닝 기록이 곧 입장권이 된다.</p>
-          <p><b>RAVE</b> 결승점에서 논알콜 쿨다운 테크노 파티. 촬영 대신 몰입.</p>
-        </div>
-        <p class="promise">운동은 더 즐거워지고, 놀이는 더 건강해진다.</p>
-        <p class="credit">목업 이미지·피규어·심볼: Team 3 브랜드 프로포절 A안<br>RUN2RAVE는 수업 과제를 위해 만든 <b>가상의 브랜드</b>이며, 같은 이름의 실제 행사·단체와 관련이 없습니다. 코스 끝의 레이빙 베뉴도 모두 가상의 장소입니다.<br>브랜드 기획·디자인 시스템: Team 3 · 웹: ○○○</p>
-      </div>
-    </section>
   </main>
 
   <script src="js/courses.js"></script>
