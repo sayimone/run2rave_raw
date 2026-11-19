@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet">
   <link rel="icon" type="image/png" href="assets/img/symbol-green.png">
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css?v=6">
 </head>
 <body data-screen="home">
   <!-- Team 3 A안 피규어·심볼 (assets/svg/source-*.svg에서 생성) -->
@@ -81,14 +81,19 @@
       </div>
 
       <div class="stage" id="stage">
-        <div class="stage-bg" id="stage-bg"></div>
-        <svg class="links" id="links" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg>
-        <div class="notes" id="notes" aria-hidden="true"></div>
+        <svg class="map-view" id="map-view" aria-hidden="true"></svg>
+        <svg class="mini" id="mini" aria-hidden="true"></svg>
+        <p class="route-note" id="route-note"></p>
+        <div class="beat-zone">
+          <div class="ring target"></div>
+          <div class="ring approach" id="approach"></div>
+          <div class="judge" id="judge"></div>
+        </div>
         <svg id="runner" class="runner" data-fig="fig-run" aria-hidden="true"></svg>
         <div class="toast" id="toast"></div>
         <div class="overlay" id="ready">
           <p class="ready-title" id="ready-name"></p>
-          <p class="ready-sub">바깥 링이 원에 닿을 때 원을 탭 · 키보드는 <kbd>Space</kbd></p>
+          <p class="ready-sub">링이 겹칠 때 화면 탭 · <kbd>Space</kbd></p>
           <button class="btn big" id="start-btn">출발</button>
         </div>
         <div class="count" id="count" aria-live="assertive"></div>
@@ -175,9 +180,10 @@
 
   </main>
 
-  <script src="js/courses.js"></script>
-  <script src="js/beat.js"></script>
-  <script src="js/ticket.js"></script>
-  <script src="js/app.js"></script>
+  <script src="js/courses.js?v=6"></script>
+  <script src="js/beat.js?v=6"></script>
+  <script src="js/route.js?v=6"></script>
+  <script src="js/ticket.js?v=6"></script>
+  <script src="js/app.js?v=6"></script>
 </body>
 </html>
