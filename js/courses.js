@@ -1,14 +1,14 @@
 /* RUN2RAVE 코스 데이터 (엔진은 하나, 코스는 이 배열에만 추가)
  * route     실제 길 [위도, 경도]: OpenStreetMap(data/osm-export.geojson) → tools/build_routes.py  © OpenStreetMap contributors
  * elevation 고도 프로필(50m 간격, m)과 오르막·내리막 구간: SRTM 고도 → tools/build_elevation.py
- * groove    비트 패턴(js/beat.js). bpm·판정·속도는 게임 밸런스용 예시 값
+ * 음악은 js/tracks.js (코스별 기본 곡은 DEFAULT_TRACK). 판정·기준 속도는 게임 밸런스용 예시 값
  * venue     코스 끝의 가상 베뉴
  */
 const COURSES = [
   {
     id: 'easy', level: '01 EASY', name: '경춘선숲길',
     from: '과기대 방면 숲길', to: '화랑대철도공원',
-    distanceKm: 1.8, bpm: 120, groove: 'house',
+    distanceKm: 1.8,
     window: 0.15, baseKmh: 8, duration: 20,
     color: '#EAFE50',
     venue: { id: 'loop', name: 'R2R LOOP' },
@@ -20,7 +20,7 @@ const COURSES = [
   {
     id: 'normal', level: '02 NORMAL', name: '반포한강공원',
     from: '동작대교 남단', to: '반포대교 달빛광장',
-    distanceKm: 2.0, bpm: 126, groove: 'garage',
+    distanceKm: 2.0,
     window: 0.12, baseKmh: 10, duration: 24,
     color: '#5B8CFF',
     venue: { id: 'ripple', name: 'R2R RIPPLE' },
@@ -32,7 +32,7 @@ const COURSES = [
   {
     id: 'hard', level: '03 HARD', name: '남산 북측순환로',
     from: '국립극장 앞', to: '북측순환로 입구 쉼터',
-    distanceKm: 3.4, bpm: 134, groove: 'techno',
+    distanceKm: 3.4,
     window: 0.09, baseKmh: 12, duration: 28,
     color: '#FF4FA3',
     venue: { id: 'wave', name: 'R2R WAVE' },

@@ -31,30 +31,25 @@ function drawTicket(canvas, d) {
 
   // 본문
   c.fillStyle = '#fff';
-  c.font = '700 74px Oswald, sans-serif';
-  c.fillText(d.name.toUpperCase(), 350, 140);
-  c.fillStyle = '#fff';
-  c.font = '700 26px Pretendard, sans-serif';
-  c.fillText(`${d.course.name} → ${d.course.venue.name}`, 350, 196);
+  c.font = '700 96px Oswald, sans-serif';
+  c.fillText(d.name.toUpperCase(), 350, 150);
 
   // 기록
   const stats = [[d.avgKmh.toFixed(1), 'KM/H'], [`${d.acc}%`, 'BEAT']];
   stats.forEach(([v, l], i) => {
-    const x = 350 + i * 230;
-    c.fillStyle = accent; c.font = '700 72px Oswald, sans-serif';
-    c.fillText(v, x, 320);
-    c.fillStyle = 'rgba(255,255,255,.6)'; c.font = '700 18px Oswald, sans-serif';
-    c.fillText(l, x, 350);
+    const x = 350 + i * 290;
+    c.fillStyle = accent; c.font = '700 110px Oswald, sans-serif';
+    c.fillText(v, x, 330);
+    c.fillStyle = 'rgba(255,255,255,.6)'; c.font = '700 30px Oswald, sans-serif';
+    c.fillText(l, x, 372);
   });
-  c.fillStyle = 'rgba(255,255,255,.5)'; c.font = '700 18px Oswald, sans-serif';
-  c.fillText(d.date, 830, 440);
 
   // 워드마크
   const wm = TicketImages['wordmark-white'];
-  if (wm.complete && wm.naturalWidth) c.drawImage(wm, 350, 404, 160, 160 * wm.naturalHeight / wm.naturalWidth);
+  if (wm.complete && wm.naturalWidth) c.drawImage(wm, 350, 400, 220, 220 * wm.naturalHeight / wm.naturalWidth);
 
   // 베뉴 도장
-  drawStamp(c, d.course.venue.id, 1010, 200, accent);
+  drawStamp(c, d.course.venue.id, 1040, 230, accent);
 
 }
 
@@ -76,8 +71,8 @@ function drawStamp(c, id, x, y, color) {
     c.stroke();
   }
   c.globalAlpha = 1;
-  c.fillStyle = color; c.font = '700 22px Oswald, sans-serif'; c.textAlign = 'center';
-  c.fillText(id.toUpperCase(), 0, 105);
+  c.fillStyle = color; c.font = '700 34px Oswald, sans-serif'; c.textAlign = 'center';
+  c.fillText(id.toUpperCase(), 0, 120);
   c.restore();
 }
 

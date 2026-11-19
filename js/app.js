@@ -25,6 +25,14 @@
   }
   hydrateFigs();
 
+  /* 데스크톱에서는 폰 프레임이 화면에 들어오도록 축소 */
+  function fitDevice() {
+    const s = window.innerWidth >= 700 ? Math.min(1, (window.innerHeight - 40) / 868, (window.innerWidth - 40) / 414) : 1;
+    document.documentElement.style.setProperty('--scale', s.toFixed(3));
+  }
+  fitDevice();
+  window.addEventListener('resize', fitDevice);
+
   const engine = new BeatEngine();
   let course = COURSES[0];
   let run = null;        // 진행 중인 게임 상태
@@ -44,7 +52,7 @@
     }, 40);
   }
   function musicPlay() {
-    if (!musicOn || document.body.dataset.screen === 'to') return;
+    if (!musicOn || document.body.dataset.screen === 'to' || !$('#music-sheet').hidden) return;
     if (bgm.paused) { bgm.volume = 0; bgm.play().then(() => fadeTo(0.7)).catch(() => {}); }
     else fadeTo(0.7);
   }
@@ -52,7 +60,7 @@
   function syncMusicBtn() {
     const b = $('#music-btn');
     b.setAttribute('aria-pressed', String(musicOn));
-    b.textContent = musicOn ? '♪ ON' : '♪ OFF';
+    b.textContent = '♪';
   }
   $('#music-btn').addEventListener('click', (e) => {
     e.stopPropagation();
@@ -76,7 +84,7 @@
     document.body.dataset.screen = id;
     $$('.steps button').forEach((b) => b.setAttribute('aria-current', b.dataset.go === id ? 'step' : 'false'));
     if (id === 'to') { musicStop(); prepareRun(); } else musicPlay();
-    window.scrollTo(0, 0);
+    const scr = document.getElementById(id); if (scr) scr.scrollTop = 0;
   }
   document.addEventListener('click', (e) => {
     const b = e.target.closest('[data-go]');
@@ -90,43 +98,102 @@
     return `M0 ${h}L${pts.join('L')}L${w} ${h}Z`;
   }
 
-  /* ---------- 1. 코스 선택: 실제 위치에 실제 경로 모양 ---------- */
-  // 서울 개략도(700x560)에 위도·경도를 대략 맞춘다
-  const toMap = ([la, lo]) => ({ x: (lo - 126.76) / 0.42 * 700, y: (37.70 - la) / 0.27 * 560 });
+  /* ---------- 1. 코스 선택: 서울 외곽선 지도 위 실제 경로 ---------- */
   function buildMap() {
+    const m = $('#map');
+    m.setAttribute('viewBox', SEOUL.viewBox);
+    $('#seoul-outline').setAttribute('d', SEOUL.outline);
+    $('#seoul-districts').setAttribute('d', SEOUL.districts);
+    $('#seoul-river-o').setAttribute('d', SEOUL.river);
+    $('#seoul-river-i').setAttribute('d', SEOUL.river);
     const pins = $('#pins');
     COURSES.forEach((c) => {
       const g = svg('g', { class: 'pin', 'data-id': c.id, tabindex: 0, role: 'button', 'aria-label': `${c.level} ${c.name}` }, pins);
-      const pts = c.route.map(toMap);
+      const pts = c.route.map(([la, lo]) => seoulXY(la, lo));
       const cx = pts.reduce((a, p) => a + p.x, 0) / pts.length, cy = pts.reduce((a, p) => a + p.y, 0) / pts.length;
-      const k = 2.2;   // 코스가 너무 작아 보이지 않게 확대
-      const d = 'M' + pts.map((p) => `${(cx + (p.x - cx) * k).toFixed(1)} ${(cy + (p.y - cy) * k).toFixed(1)}`).join('L');
-      svg('circle', { cx, cy, r: 46, class: 'pin-hit' }, g);
-      svg('path', { d, class: 'pin-route' }, g);
-      const e = pts[pts.length - 1];
-      svg('circle', { cx: cx + (e.x - cx) * k, cy: cy + (e.y - cy) * k, r: 7, class: 'pin-core' }, g);
-      // 한강 남쪽 코스는 라벨을 아래에 둬서 강과 겹치지 않게
-      const below = c.route[0][0] < 37.53;
-      const t = svg('text', { x: cx, y: below ? cy + 50 : cy - 34, class: 'pin-label', 'text-anchor': 'middle' }, g);
-      t.textContent = c.level;
+      const k = 2.6;   // 실제 크기로는 너무 작아 보여서 제자리에서 확대
+      const P = (p) => ({ x: cx + (p.x - cx) * k, y: cy + (p.y - cy) * k });
+      svg('circle', { cx, cy, r: 70, class: 'pin-hit' }, g);
+      svg('path', { d: 'M' + pts.map(P).map((p) => `${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join('L'), class: 'pin-route' }, g);
+      const e = P(pts[pts.length - 1]);
+      svg('circle', { cx: e.x, cy: e.y, r: 14, class: 'pin-core' }, g);
+      const below = c.route[0][0] < 37.53;   // 한강 남쪽 코스는 라벨을 아래로
+      const t = svg('text', { x: cx, y: below ? cy + 78 : cy - 50, class: 'pin-label', 'text-anchor': 'middle' }, g);
+      t.textContent = c.level.split(' ')[1];
       g.addEventListener('click', () => selectCourse(c.id));
       g.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); selectCourse(c.id); } });
     });
   }
 
+  /* ---------- 음악: 코스마다 곡과 BPM ---------- */
+  const pick = {};   // { courseId: { track, bpm } }
+  function music(c = course) {
+    if (!pick[c.id]) { const t = TRACKS.find((x) => x.id === DEFAULT_TRACK[c.id]); pick[c.id] = { track: t, bpm: t.bpm }; }
+    return pick[c.id];
+  }
+  const baseKmh = (c, bpm) => c.baseKmh * bpm / 128;   // 빠른 음악 = 빠른 페이스
+
+  function openSheet() {
+    engine.unlock();
+    musicStop();
+    const m = music();
+    $('#track-list').innerHTML = TRACKS.map((t, i) => `
+      <li><button data-track="${t.id}" aria-pressed="${t.id === m.track.id}">
+        <span class="no">${String(i + 1).padStart(2, '0')}</span>
+        <span class="tt"><b>${t.name}</b><small>${t.mood}</small></span>
+        <span class="bpm">${t.bpm}</span>
+      </button></li>`).join('');
+    $$('[data-track]').forEach((b) => b.addEventListener('click', () => {
+      engine.unlock();
+      const t = TRACKS.find((x) => x.id === b.dataset.track);
+      music().track = t; music().bpm = t.bpm;
+      $$('[data-track]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+      syncTempo(); preview();
+    }));
+    syncTempo();
+    $('#music-sheet').hidden = false;
+    preview();
+  }
+  function closeSheet() {
+    engine.stop(); engine.pause();
+    $('#music-sheet').hidden = true;
+    renderPanel();
+    musicPlay();
+  }
+  function syncTempo() {
+    const m = music();
+    $('#tempo').value = m.bpm;
+    $('#tempo-bpm').textContent = m.bpm;
+    $('#tempo-pace').textContent = pace(baseKmh(course, m.bpm));
+  }
+  let previewTimer = null;
+  function preview() {
+    clearTimeout(previewTimer);
+    previewTimer = setTimeout(() => { const m = music(); engine.start(m.bpm, m.track, { preview: true }); }, 120);
+  }
+  $('#tempo').addEventListener('input', (e) => { music().bpm = Number(e.target.value); syncTempo(); preview(); });
+  $('#sheet-done').addEventListener('click', closeSheet);
+  $('#music-sheet').addEventListener('click', (e) => { if (e.target.id === 'music-sheet') closeSheet(); });
+
   function selectCourse(id) {
     course = COURSES.find((c) => c.id === id);
     $$('.pin').forEach((p) => p.classList.toggle('on', p.dataset.id === id));
     document.documentElement.style.setProperty('--accent', course.color);
+    renderPanel();
+    $('.steps [data-go="to"]').disabled = false;
+  }
+  function renderPanel() {
+    const m = music();
     $('#course-panel').innerHTML = `
-      <div class="tabs" role="tablist">${COURSES.map((c) => `<button role="tab" data-pick="${c.id}" aria-selected="${c.id === id}">${c.level}</button>`).join('')}</div>
+      <div class="tabs" role="tablist">${COURSES.map((c) => `<button role="tab" data-pick="${c.id}" aria-selected="${c.id === course.id}">${c.level}</button>`).join('')}</div>
       <h3>${course.name}</h3>
       <p class="panel-route">${course.from} → ${course.venue.name}</p>
       <svg class="panel-elev" viewBox="0 0 300 70" preserveAspectRatio="none" aria-hidden="true"><path d="${elevArea(course, 300, 70)}"/></svg>
-      <p class="panel-nums"><span><b>${course.distanceKm.toFixed(1)}</b>KM</span><span><b>${course.bpm}</b>BPM</span><span><b>+${course.elevation.gain}</b>M</span></p>
+      <p class="panel-nums"><span><b>${course.distanceKm.toFixed(1)}</b>KM</span><span><b>+${course.elevation.gain}</b>M</span><span><b>${pace(baseKmh(course, m.bpm))}</b>/KM</span></p>
+      <button class="music-row" id="music-open" aria-label="음악 고르기"><span class="eq"><i></i><i></i><i></i></span><b>${m.track.name}</b><span>${m.bpm} BPM ›</span></button>
       <button class="btn big" data-go="to">출발 →</button>`;
     $$('[data-pick]').forEach((b) => b.addEventListener('click', () => selectCourse(b.dataset.pick)));
-    $('.steps [data-go="to"]').disabled = false;
+    $('#music-open').addEventListener('click', openSheet);
   }
 
   /* ---------- 2. 게임: 실제 경로 지도 ---------- */
@@ -155,8 +222,9 @@
     const c = course;
     $('#to').dataset.course = c.id;
     $('#ready-name').textContent = `${c.level} · ${c.name}`;
+    $('#ready-track').textContent = `♪ ${music().track.name} · ${music().bpm} BPM`;
+    $('#paused').hidden = true;
     setupMap();
-    $('#progress-venue').textContent = c.venue.name.replace('R2R ', '');
     $('#elev-bg').setAttribute('d', elevArea(c, 1000, 60));
     $('#elev-fg').setAttribute('d', elevArea(c, 1000, 60));
     $('#ready').hidden = false;
@@ -176,11 +244,12 @@
     run = {
       km: 0, elapsed: 0, speedTime: 0, speed: 0,
       scores: [], judged: new Set(), cpPassed: 0,
-      compress: (c.distanceKm / (c.baseKmh * c.duration / 3600)) * FAST,
+      base: baseKmh(c, music().bpm),
+      compress: (c.distanceKm / (baseKmh(c, music().bpm) * c.duration / 3600)) * FAST,
       last: performance.now(), done: false,
-      chart: [], covered: -1, hold: null
+      chart: [], covered: -1, hold: null, paused: false
     };
-    engine.start(c.bpm, c.groove, 4);
+    engine.start(music().bpm, music().track, { countIn: 4 });
     requestAnimationFrame(loop);
   }
 
@@ -215,7 +284,7 @@
 
   /* 누르기: 가까운 박의 노트를 판정. 홀드면 누르고 있는 상태로 */
   function press() {
-    if (!run || run.done || run.hold) return;
+    if (!run || run.done || run.hold || run.paused) return;
     const t = nowT();
     const i0 = Math.round((t - engine.startTime) / engine.interval);
     let best = null;
@@ -270,6 +339,7 @@
 
   function loop(now) {
     if (!run || run.done) return;
+    if (run.paused) { run.last = now; requestAnimationFrame(loop); return; }
     const dt = Math.min(0.1, (now - run.last) / 1000);
     run.last = now;
     const at = nowT();
@@ -310,7 +380,7 @@
     const acc8 = recent.length ? recent.reduce((a, b) => a + b, 0) / recent.length : 0.6;
     const frac = run.km / course.distanceKm;
     const ter = terrainAt(frac);
-    const target = course.baseKmh * (0.7 + 0.5 * acc8) * TERRAIN_FACTOR[ter];
+    const target = run.base * (0.7 + 0.5 * acc8) * TERRAIN_FACTOR[ter];
     run.speed += (target - run.speed) * Math.min(1, dt * 3);
 
     run.elapsed += dt;
@@ -355,7 +425,7 @@
     t.hidden = ter === 'flat';
     t.textContent = TERRAIN_LABEL[ter];
     t.dataset.t = ter;
-    $('#prog-km').textContent = `${km.toFixed(1)} / ${course.distanceKm.toFixed(1)} KM`;
+    $('#prog-km').textContent = `${km.toFixed(1)} / ${course.distanceKm.toFixed(1)}`;
   }
 
   function setProgress(f) {
@@ -436,10 +506,36 @@
   });
   $('#again-btn').addEventListener('click', () => go('to'));
 
+  /* ---------- 일시정지: 음악 시계를 멈추면 박자도 같이 멈춘다 ---------- */
+  function pauseRun() {
+    if (!run || run.done || run.paused || !$('#ready').hidden) return;
+    if (run.hold) release();
+    run.paused = true;
+    engine.pause();
+    $('#paused').hidden = false;
+  }
+  function resumeRun() {
+    if (!run || !run.paused) return;
+    $('#paused').hidden = true;
+    let n = 3;
+    $('#count').textContent = n;
+    const tick = setInterval(() => {
+      n--;
+      if (n > 0) { $('#count').textContent = n; return; }
+      clearInterval(tick);
+      $('#count').textContent = '';
+      engine.resume().then(() => { if (run) { run.paused = false; run.last = performance.now(); } });
+    }, 450);
+  }
+  $('#pause-btn').addEventListener('click', (e) => { e.stopPropagation(); pauseRun(); });
+  $('#resume-btn').addEventListener('click', (e) => { e.stopPropagation(); resumeRun(); });
+  $('#restart-btn').addEventListener('click', (e) => { e.stopPropagation(); engine.resume(); prepareRun(); });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) pauseRun(); });
+
   /* ---------- 입력: 화면 누르기/떼기, Space 누르기/떼기 ---------- */
   $('#start-btn').addEventListener('click', (e) => { e.stopPropagation(); startRun(); });
   $('#to').addEventListener('pointerdown', (e) => {
-    if (e.target.closest('.overlay, .nav')) return;
+    if (e.target.closest('.overlay, .nav, .pause-btn')) return;
     e.preventDefault();
     press();
   });
@@ -447,7 +543,9 @@
   window.addEventListener('pointercancel', release);
   document.addEventListener('keydown', (e) => {
     if (document.body.dataset.screen !== 'to') return;
+    if (e.code === 'Escape' || e.code === 'KeyP') { run && run.paused ? resumeRun() : pauseRun(); return; }
     if (e.code !== 'Space' && e.key !== ' ') return;
+    if (run && run.paused) return;
     e.preventDefault();
     if (e.repeat) return;
     if (!$('#ready').hidden) startRun(); else press();
