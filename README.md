@@ -18,8 +18,8 @@
 
 | 코스(편도) | 거리 | BPM | 도착 베뉴(가상) |
 | --- | --- | --- | --- |
-| 01 EASY 공릉 경춘선숲길: 과기대 입구 → 화랑대철도공원 | 약 2km | 120 | R2R LOOP · 순환의 플랫폼 |
-| 02 NORMAL 반포한강공원: 동작대교 남단 → 반포대교 달빛광장 | 약 2.5km (추정, 확정 필요) | 128 | R2R RIPPLE · 번짐의 데크 |
+| 01 EASY 공릉 경춘선숲길: 과기대 방면 숲길 → 화랑대철도공원 | 약 1.8km | 120 | R2R LOOP · 순환의 플랫폼 |
+| 02 NORMAL 반포한강공원: 동작대교 남단 → 반포대교 달빛광장 | 약 2.0km | 128 | R2R RIPPLE · 번짐의 데크 |
 | 03 HARD 남산 북측순환로: 국립극장 앞 → 북측순환로 입구 쉼터 | 약 3.4km | 135 | R2R WAVE · 파동의 숲 |
 
 ## 속도 계산
@@ -79,8 +79,7 @@ Settings → Pages → Branch `main` / `(root)` → Save. 잠시 뒤 `https://<�
 
 - [x] 피규어·심볼 '2'를 원본 SVG로 교체
 - [ ] 시그니처·워드마크 원본 SVG 받아서 교체 (지금은 프로포절 PDF에서 따낸 임시 PNG)
-- [ ] `courses.js`의 `route`를 실제 경로 좌표(OpenStreetMap 등)로 교체 — 지금은 임시 대략 경로
-- [ ] 중급 코스 편도 거리 확정 (지도 거리 재기 또는 답사)
+- [x] 코스 경로를 OpenStreetMap 실제 길 데이터로 교체 (`data/osm-export.geojson` → `tools/build_routes.py`)
 - [ ] 코스별 배경 일러스트 (철길·동네 / 강변·다리 / 숲·언덕)
 - [ ] 전시 태블릿에서 박자 판정 테스트
 
@@ -88,4 +87,5 @@ Settings → Pages → Branch `main` / `(root)` → Save. 잠시 뒤 `https://<�
 
 - RUN2RAVE는 수업 과제를 위해 만든 **가상의 브랜드**이며, 같은 이름의 실제 행사·단체와 관련이 없다. 코스 끝 레이빙 베뉴도 모두 가상의 장소다.
 - 브랜드 기획·디자인 시스템(로고, 심볼, 피규어): Team 3 브랜드 프로포절 A안 '살아있는 내면의 공명'
+- 지도 데이터: © OpenStreetMap contributors (ODbL)
 - 폰트: Pretendard, Oswald (SIL Open Font License)

@@ -125,7 +125,7 @@
     const r = Route.make(course.route);
     const u = viewWidth() / stage.clientWidth;
     map = { r, ...Route.draw($('#map-view'), $('#mini'), r, course, u) };
-    $('#route-note').textContent = course.routeSource === '실제 경로' ? '' : '※ 임시 대략 경로';
+    $('#route-note').textContent = course.routeSource === '실제 경로' ? '© OpenStreetMap contributors' : '※ 임시 대략 경로';
     drawMap(0);
   }
   function drawMap(f) {
