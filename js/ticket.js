@@ -24,10 +24,6 @@ function drawTicket(canvas, d) {
   c.font = '700 96px Oswald, sans-serif';
   c.fillText('R2R', 36, 190);
   c.fillText(d.no, 36, 300);
-  c.font = '700 18px Pretendard, sans-serif';
-  c.fillText(d.course.level, 36, 400);
-  c.fillText(d.course.venue.name, 36, 428);
-
   // 절취선
   c.strokeStyle = '#000'; c.setLineDash([10, 10]); c.lineWidth = 3;
   c.beginPath(); c.moveTo(300, 20); c.lineTo(300, H - 20); c.stroke();
@@ -37,43 +33,29 @@ function drawTicket(canvas, d) {
   c.fillStyle = '#fff';
   c.font = '700 74px Oswald, sans-serif';
   c.fillText(d.name.toUpperCase(), 350, 140);
-  c.font = '500 22px Pretendard, sans-serif';
-  c.fillStyle = 'rgba(255,255,255,.75)';
-  c.fillText(`RUN2RAVE 소전시 입장권 · ${d.date}`, 350, 190);
-
   c.fillStyle = '#fff';
   c.font = '700 26px Pretendard, sans-serif';
-  c.fillText(`${d.course.name} ${d.course.distanceLabel.replace('약 ', '')} → ${d.course.venue.name}`, 350, 250);
+  c.fillText(`${d.course.name} → ${d.course.venue.name}`, 350, 196);
 
   // 기록
-  const stats = [
-    [`${d.avgKmh.toFixed(1)}`, 'KM/H 평균'],
-    [d.pace, '페이스 /KM'],
-    [`${d.acc}%`, '박자 정확도']
-  ];
+  const stats = [[d.avgKmh.toFixed(1), 'KM/H'], [`${d.acc}%`, 'BEAT']];
   stats.forEach(([v, l], i) => {
-    const x = 350 + i * 190;
-    c.fillStyle = accent; c.font = '700 54px Oswald, sans-serif';
-    c.fillText(v, x, 340);
-    c.fillStyle = 'rgba(255,255,255,.7)'; c.font = '500 18px Pretendard, sans-serif';
-    c.fillText(l, x, 372);
+    const x = 350 + i * 230;
+    c.fillStyle = accent; c.font = '700 72px Oswald, sans-serif';
+    c.fillText(v, x, 320);
+    c.fillStyle = 'rgba(255,255,255,.6)'; c.font = '700 18px Oswald, sans-serif';
+    c.fillText(l, x, 350);
   });
+  c.fillStyle = 'rgba(255,255,255,.5)'; c.font = '700 18px Oswald, sans-serif';
+  c.fillText(d.date, 830, 440);
 
   // 워드마크
   const wm = TicketImages['wordmark-white'];
   if (wm.complete && wm.naturalWidth) c.drawImage(wm, 350, 404, 160, 160 * wm.naturalHeight / wm.naturalWidth);
 
   // 베뉴 도장
-  drawStamp(c, d.course.venue.id, 990, 150, accent);
+  drawStamp(c, d.course.venue.id, 1010, 200, accent);
 
-  // 카메라 스티커 자리
-  c.strokeStyle = '#fff'; c.lineWidth = 3; c.setLineDash([6, 8]);
-  c.beginPath(); c.arc(990, 360, 50, 0, Math.PI * 2); c.stroke(); c.setLineDash([]);
-  c.fillStyle = 'rgba(255,255,255,.8)'; c.font = '700 15px Pretendard, sans-serif';
-  c.textAlign = 'center';
-  c.fillText('카메라 스티커 자리', 990, 432);
-  c.fillText('촬영 대신 몰입', 990, 454);
-  c.textAlign = 'left';
 }
 
 function drawStamp(c, id, x, y, color) {

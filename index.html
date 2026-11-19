@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet">
   <link rel="icon" type="image/png" href="assets/img/symbol-green.png">
-  <link rel="stylesheet" href="css/style.css?v=7">
+  <link rel="stylesheet" href="css/style.css?v=8">
 </head>
 <body data-screen="home">
   <!-- Team 3 A안 피규어·심볼 (assets/svg/source-*.svg에서 생성) -->
@@ -28,8 +28,10 @@
       <button data-go="to" disabled><span class="m-hide">02 </span>TO</button>
       <button data-go="rave" disabled><span class="m-hide">03 </span>RAVE</button>
     </nav>
-    <div class="sub-nav"><button class="info-btn" data-go="about">소개</button></div>
+    <div class="sub-nav"><button class="info-btn music-btn" id="music-btn" aria-pressed="true" aria-label="배경 음악 켜기·끄기">♪ ON</button><button class="info-btn" data-go="about">소개</button></div>
   </header>
+
+  <audio id="bgm" src="assets/audio/you-know-me.mp3?v=8" loop preload="auto"></audio>
 
   <main>
     <!-- 0. 홈 -->
@@ -55,7 +57,6 @@
     <!-- 1. RUN: 코스 고르기 -->
     <section id="run" class="screen lime" aria-labelledby="run-title">
       <div class="run-head">
-        <p class="kicker">SELECT COURSE · SEOUL</p>
         <h2 id="run-title">오늘은 어디를 달릴까요?</h2>
       </div>
       <div class="run-body">
@@ -66,7 +67,6 @@
             <text class="river-label" x="520" y="352">HAN RIVER</text>
             <g id="pins"></g>
           </svg>
-          <p class="map-note">서울 개략도 · 위치는 대략적인 배치</p>
         </div>
         <aside class="panel" id="course-panel" aria-live="polite"></aside>
       </div>
@@ -83,24 +83,31 @@
       <div class="stage" id="stage">
         <svg class="map-view" id="map-view" aria-hidden="true"></svg>
         <svg class="mini" id="mini" aria-hidden="true"></svg>
-        <p class="route-note" id="route-note"></p>
+        <p class="route-note">© OpenStreetMap contributors</p>
         <div class="beat-zone">
           <div class="ring target"></div>
           <div class="ring approach" id="approach"></div>
+          <svg class="hold-ring" viewBox="-70 -70 140 140" aria-hidden="true"><circle id="hold-arc" r="64" transform="rotate(-90)"/></svg>
+          <div class="cue" id="cue"></div>
           <div class="judge" id="judge"></div>
         </div>
         <svg id="runner" class="runner" data-fig="fig-run" aria-hidden="true"></svg>
         <div class="toast" id="toast"></div>
         <div class="overlay" id="ready">
           <p class="ready-title" id="ready-name"></p>
-          <p class="ready-sub">링이 겹칠 때 화면 탭 · <kbd>Space</kbd></p>
+          <p class="ready-sub">링이 겹칠 때 탭 · 오르막의 HOLD는 누르고 버티기<br><kbd>Space</kbd></p>
           <button class="btn big" id="start-btn">출발</button>
         </div>
         <div class="count" id="count" aria-live="assertive"></div>
       </div>
 
       <div class="progress">
-        <div class="progress-bar" id="progress-bar"><div class="progress-fill" id="progress-fill"></div><div class="progress-dot" id="progress-dot"></div></div>
+        <svg class="elev-bar" viewBox="0 0 1000 60" preserveAspectRatio="none" aria-hidden="true">
+          <defs><clipPath id="elev-clip"><rect id="elev-clip-rect" x="0" y="0" width="0" height="60"/></clipPath></defs>
+          <path id="elev-bg" class="elev-bg"/>
+          <path id="elev-fg" class="elev-fg" clip-path="url(#elev-clip)"/>
+          <line id="elev-dot" class="elev-dot" x1="0" x2="0" y1="0" y2="60"/>
+        </svg>
         <span class="progress-venue" id="progress-venue">R2R</span>
         <span class="prog-km" id="prog-km">0.0 / 0.0 KM</span>
       </div>
@@ -112,13 +119,12 @@
       <div class="rave-inner">
         <p class="kicker" id="rave-kicker">FINISH</p>
         <h2 id="rave-title">달린 당신만, 플로어로 들어와요.</h2>
-        <p class="venue-line" id="venue-line"></p>
         <div class="result">
           <div><b id="res-kmh">0.0</b><small>KM/H</small><span>평균 속도</span></div>
           <div><b id="res-acc">0%</b><span>박자 정확도</span></div>
         </div>
-        <p class="fine">게임 기록을 실제 코스 거리로 환산한 값이에요.</p>
-        <input id="runner-name" class="name-input" maxlength="12" placeholder="이름을 넣으면 입장권에 적혀요" autocomplete="off" aria-label="입장권에 적을 이름">
+        <p class="fine">게임 기록을 실제 거리로 환산한 값</p>
+        <input id="runner-name" class="name-input" maxlength="12" placeholder="이름" autocomplete="off" aria-label="입장권에 적을 이름">
         <canvas id="ticket" width="1200" height="480" aria-label="입장권 미리보기"></canvas>
         <div class="rave-actions">
           <button class="btn ghost" id="again-btn">다시 달리기</button>
@@ -180,10 +186,10 @@
 
   </main>
 
-  <script src="js/courses.js?v=7"></script>
-  <script src="js/beat.js?v=7"></script>
-  <script src="js/route.js?v=7"></script>
-  <script src="js/ticket.js?v=7"></script>
-  <script src="js/app.js?v=7"></script>
+  <script src="js/courses.js?v=8"></script>
+  <script src="js/beat.js?v=8"></script>
+  <script src="js/route.js?v=8"></script>
+  <script src="js/ticket.js?v=8"></script>
+  <script src="js/app.js?v=8"></script>
 </body>
 </html>
