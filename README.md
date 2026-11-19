@@ -12,6 +12,7 @@
 | 01 RUN | 서울 개략 지도 | 코스 3종(EASY · NORMAL · HARD) 중 하나 고르기 |
 | 02 TO | 비트 러닝 게임 | 원 두 개가 겹칠 때 탭/스페이스. 정확할수록 km/h가 오름. 놓쳐도 멈추지 않음 |
 | 03 RAVE | 베뉴 도착 | 평균 속도·환산 시간·정확도 확인, 이름 넣고 입장권 PNG 저장 |
+| 소개 | 브랜드·서비스 소개 | RUN/TO/RAVE, 건강한 카타르시스, 4가지 차별점, 포스터·리스트밴드·캔 목업 |
 | 전시 정보 | 소전시 안내 | 일정·장소·브랜드 룰 |
 
 ## 코스와 가상 베뉴
@@ -37,8 +38,27 @@ js/courses.js     코스 데이터 (코스 추가는 여기만)
 js/beat.js        Web Audio 비트 엔진 (킥·하이햇 직접 합성, 저작권 음원 없음)
 js/ticket.js      입장권 캔버스
 js/app.js         화면 전환 · 게임 루프 · 판정 · 결과
-assets/img/       로고 · 심볼 · 피규어 (PNG)
+assets/svg/       A안 원본 SVG(source-A-logo-*.svg)와 이를 묶은 sprite.svg
+assets/img/       시그니처·워드마크·초록 심볼 (PNG)
+assets/mockup/    포스터·리스트밴드·캔 목업 (JPG로 압축)
 ```
+
+## 피규어 쓰는 법
+
+`index.html` 맨 위에 SVG 스프라이트가 들어 있다. 아무 데서나 이렇게 쓰면 `app.js`가 채워 준다.
+
+```html
+<svg class="내클래스" data-fig="fig-run"></svg>
+```
+
+| id | 그림 |
+| --- | --- |
+| `fig-run` · `fig-jump` · `fig-dance` | 꽉 찬 피규어 3종 (별 포함) |
+| `line-run` · `line-jump` · `line-dance` | 선 피규어 3종 |
+| `fig-group` · `line-group` | 세 피규어가 이어진 그룹 |
+| `line-two` | 선으로 된 심볼 '2' |
+
+색은 CSS `color`(몸), `--star`(별), 선 굵기는 `--line`으로 바꾼다.
 
 ## 로컬에서 보기
 
@@ -57,7 +77,8 @@ Settings → Pages → Branch `main` / `(root)` → Save. 잠시 뒤 `https://<�
 
 ## 할 일
 
-- [ ] `assets/img`의 로고·피규어를 원본 벡터(SVG)에서 다시 내보내기 (지금은 프로포절 PDF에서 따낸 임시 PNG)
+- [x] 피규어·심볼 '2'를 원본 SVG로 교체
+- [ ] 시그니처·워드마크 원본 SVG 받아서 교체 (지금은 프로포절 PDF에서 따낸 임시 PNG)
 - [ ] 중급 코스 편도 거리 확정 (지도 거리 재기 또는 답사)
 - [ ] 코스별 배경 일러스트 (철길·동네 / 강변·다리 / 숲·언덕)
 - [ ] 전시 일정·장소·크레딧 채우기

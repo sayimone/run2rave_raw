@@ -6,6 +6,19 @@
   const FAST = Math.max(1, Number(params.get('fast')) || 1);   // 테스트용: ?fast=5
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  /* <svg data-fig="fig-run"> 를 스프라이트 심볼로 채운다 (viewBox 복사로 비율 유지) */
+  function hydrateFigs(root = document) {
+    root.querySelectorAll('svg[data-fig]').forEach((el) => {
+      const sym = document.getElementById(el.dataset.fig);
+      if (!sym || el.firstChild) return;
+      el.setAttribute('viewBox', sym.getAttribute('viewBox'));
+      const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+      use.setAttribute('href', `#${el.dataset.fig}`);
+      el.appendChild(use);
+    });
+  }
+  hydrateFigs();
+
   const engine = new BeatEngine();
   let course = COURSES[0];
   let run = null;        // 진행 중인 게임 상태
@@ -93,7 +106,6 @@
     $('#ready-name').textContent = c.name;
     $('#prog-from').textContent = c.from;
     $('#prog-to').textContent = `${c.venue.name} (가상)`;
-    $('#runner').src = `assets/img/figure0-${c.figure}.png`;
     $('#stage-bg').className = `stage-bg ${c.stage}`;
     const bar = $('#progress-bar');
     bar.querySelectorAll('.cp').forEach((n) => n.remove());
@@ -284,6 +296,7 @@
     $('#res-acc').textContent = `${result.acc}%`;
     $('#programs').innerHTML = `<li class="pv">코어 밸류 · ${v.value}</li>` + v.programs.map((p) => `<li>${p}</li>`).join('');
     $('#venue-art').innerHTML = venueArt(v.id, c.figure);
+    hydrateFigs($('#venue-art'));
     $('#save-btn').disabled = true;
     makeTicket();
   }
@@ -293,9 +306,9 @@
     if (id === 'loop') lines = [1, 2, 3, 4].map((k) => `<circle class="va va${k}" cx="300" cy="300" r="${k * 70}"/>`).join('');
     else if (id === 'ripple') lines = [0, 1, 2, 3, 4].map((k) => `<path class="va va${k}" d="M-50 ${200 + k * 70} q50 -40 100 0 t100 0 t100 0 t100 0 t100 0 t100 0 t100 0"/>`).join('');
     else lines = `<polyline class="va va1" points="-20,420 60,260 140,400 220,180 300,380 380,220 460,400 540,280 620,420"/>`;
-    return `<svg viewBox="0 0 600 600" preserveAspectRatio="xMidYMid slice">${lines}</svg>
-      <img src="assets/img/figure1-black.png" class="vf vf1" alt="">
-      <img src="assets/img/figure2-black.png" class="vf vf2" alt="">`;
+    return `<svg class="va-bg" viewBox="0 0 600 600" preserveAspectRatio="xMidYMid slice">${lines}</svg>
+      <svg class="vf vf1" data-fig="fig-jump"></svg>
+      <svg class="vf vf2" data-fig="fig-dance"></svg>`;
   }
 
   function ticketNo() {
